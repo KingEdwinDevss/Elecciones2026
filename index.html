@@ -2,9 +2,8 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Elecciones 2026</title>
-        <style>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Material+Icons+Outlined" rel="stylesheet">
     <style>
@@ -27,6 +26,10 @@
         .chat-header { background: #202c33; padding: 15px; display: flex; align-items: center; gap: 15px; }
         .chat-messages { flex-grow: 1; padding: 20px; overflow-y: auto; color: #fff; display: flex; flex-direction: column; scroll-behavior: smooth; -webkit-overflow-scrolling: touch; }
         .msg-bubble { padding: 10px; border-radius: 8px; margin-bottom: 10px; max-width: 80%; width: fit-content; position: relative; cursor: pointer; word-wrap: break-word; }
+        
+        /* Estilos añadidos para que los links resalten en el chat */
+        .msg-bubble a { color: #53bdeb; text-decoration: underline; pointer-events: auto; }
+        
         .input-area { background: #202c33; padding: 10px; display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
         input { flex-grow: 1; background: #2a3942; border: none; padding: 10px; border-radius: 8px; color: white; outline: none; }
         #add-chat-modal { display: none; position: absolute; top: 60px; right: 20px; background: #202c33; padding: 15px; border-radius: 8px; z-index: 100; box-shadow: 0 4px 10px rgba(0,0,0,0.5); border: 1px solid #333; }
@@ -189,6 +192,12 @@
         }
     }
 
+    // Función auxiliar para transformar texto plano con URLs en etiquetas HTML clicables
+    function linkify(text) {
+        let urlPattern = /(https?:\/\/[^\s]+)/g;
+        return text.replace(urlPattern, '<a href="$1" target="_blank">$1</a>');
+    }
+
     function openChat(name, initialMsg) {
         document.getElementById('chat-list-screen').style.display = 'none';
         document.getElementById('chat-detail-screen').style.display = 'flex';
@@ -196,10 +205,12 @@
         
         if ((!chatHistories[name] || chatHistories[name] === "DELETED") && initialMsg) {
             let now = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+            // Convertimos posibles links en el mensaje inicial por defecto
+            let formattedInitial = linkify(initialMsg);
             chatHistories[name] = `
-                <div onclick="handleMessageClick(this)">
+                <div onclick="handleMessageClick(this, event)">
                     <div class="tag"></div>
-                    <div class="msg-bubble" style="margin-right:auto; background:#202c33;">${initialMsg}<br><small style="font-size:9px; color:#aaa;">${now}</small></div>
+                    <div class="msg-bubble" style="margin-right:auto; background:#202c33;">${formattedInitial}<br><small style="font-size:9px; color:#aaa;">${now}</small></div>
                 </div>`;
             localStorage.setItem('savedHistories', JSON.stringify(chatHistories));
         }
@@ -230,10 +241,13 @@
                 cancelReply();
             }
 
+            // Convertimos las URLs del input en links HTML reales antes de insertarlas
+            let processedText = linkify(input.value);
+
             container.innerHTML += `
-                <div onclick="handleMessageClick(this)">
+                <div onclick="handleMessageClick(this, event)">
                     <div class="tag"></div>
-                    <div class="msg-bubble" style="${style}">${replyHtml}${input.value}<br><small style="font-size:9px; color:#aaa;">${now}</small></div>
+                    <div class="msg-bubble" style="${style}">${replyHtml}${processedText}<br><small style="font-size:9px; color:#aaa;">${now}</small></div>
                 </div>`;
             
             chatHistories[name] = container.innerHTML;
@@ -258,7 +272,12 @@
         }, 100);
     }
 
-    function handleMessageClick(wrapper) {
+    function handleMessageClick(wrapper, event) {
+        // Si el usuario hace clic directamente en un enlace, permitimos que se abra y no disparamos el menú de etiquetar/responder
+        if (event.target.tagName === 'A') {
+            return;
+        }
+
         let bubble = wrapper.querySelector('.msg-bubble');
         let bubbleClone = bubble.cloneNode(true);
         let replyBox = bubbleClone.querySelector('.reply-box');
