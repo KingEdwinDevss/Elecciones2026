@@ -1,53 +1,42 @@
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
+    <title>Elecciones 2026</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Material+Icons+Outlined" rel="stylesheet">
     <style>
         body { background-color: #111b21; color: #e9edef; font-family: 'Segoe UI', sans-serif; margin: 0; overflow: hidden; }
-        
-        /* Uso de 100dvh para que sea exacto al área visible en móviles */
         .app-container { width: 100%; height: 100dvh; display: flex; flex-direction: column; overflow: hidden; }
-        
-        /* Encabezado */
         .header { padding: 20px; font-size: 24px; font-weight: 600; display: flex; justify-content: space-between; align-items: center; }
         .icons { color: #aebac1; display: flex; gap: 20px; align-items: center; }
-        
-        /* Estilo específico*/
-        .material-icons-outlined { 
-            font-size: 24px; 
-            cursor: pointer; 
-            font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 24; 
-        }
-        
-        /* Estilo(flechas y enviar) */
+        .material-icons-outlined { font-size: 24px; cursor: pointer; font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 24; }
         .material-icons { font-size: 24px; cursor: pointer; }
-
-        /* Estructura de pantallas */
-        #chat-list-screen { display: block; overflow-y: auto; flex-grow: 1; }
+        #chat-list-screen { display: block; overflow-y: auto; flex-grow: 1; -webkit-overflow-scrolling: touch; }
         #chat-detail-screen { display: none; flex-direction: column; height: 100%; background: #0b141a; overflow: hidden; }
-        
         .chat-item { display: flex; align-items: flex-start; padding: 12px 20px; cursor: pointer; }
         .avatar { width: 50px; height: 50px; border-radius: 50%; background-color: #374248; margin-right: 15px; background-size: cover; background-position: center; flex-shrink: 0; }
-        .chat-info { flex-grow: 1; display: flex; flex-direction: column; justify-content: center; }
+        .chat-info { flex-grow: 1; display: flex; flex-direction: column; justify-content: center; overflow: hidden; }
         .name { font-size: 17px; margin-bottom: 2px; }
-        .message { color: #8696a0; font-size: 14px; line-height: 1.3; word-wrap: break-word; }
+        .message { color: #8696a0; font-size: 14px; line-height: 1.3; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .meta { text-align: right; margin-left: 10px; display: flex; flex-direction: column; align-items: flex-end; }
         .time { color: #00a884; font-size: 12px; margin-bottom: 4px; white-space: nowrap; }
         .badge { background-color: #00a884; color: #111b21; border-radius: 50%; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; }
-        
         .chat-header { background: #202c33; padding: 15px; display: flex; align-items: center; gap: 15px; }
-        .chat-messages { flex-grow: 1; padding: 20px; overflow-y: auto; color: #fff; display: flex; flex-direction: column; }
-        .msg-bubble { background: #005c4b; padding: 10px; border-radius: 8px; margin-bottom: 10px; max-width: 80%; width: fit-content; }
-        
+        .chat-messages { flex-grow: 1; padding: 20px; overflow-y: auto; color: #fff; display: flex; flex-direction: column; scroll-behavior: smooth; -webkit-overflow-scrolling: touch; }
+        .msg-bubble { padding: 10px; border-radius: 8px; margin-bottom: 10px; max-width: 80%; width: fit-content; position: relative; cursor: pointer; word-wrap: break-word; }
         .input-area { background: #202c33; padding: 10px; display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
-        input { flex-grow: 1; background: #2a3942; border: none; padding: 10px; border-radius: 8px; color: white; }
+        input { flex-grow: 1; background: #2a3942; border: none; padding: 10px; border-radius: 8px; color: white; outline: none; }
+        #add-chat-modal { display: none; position: absolute; top: 60px; right: 20px; background: #202c33; padding: 15px; border-radius: 8px; z-index: 100; box-shadow: 0 4px 10px rgba(0,0,0,0.5); border: 1px solid #333; }
+        #add-chat-modal input { margin-bottom: 10px; display: block; width: 180px; }
+        .tag { font-size: 10px; color: #00a884; display: none; margin-bottom: 2px; font-weight: bold; background: rgba(0, 168, 132, 0.1); padding: 2px 5px; border-radius: 4px; width: fit-content; }
+        .reply-box { background: rgba(0,0,0,0.2); border-left: 4px solid #00a884; padding: 5px; margin-bottom: 5px; border-radius: 4px; font-size: 12px; color: #8696a0; }
+        #reply-preview { display: none; background: #202c33; padding: 10px; border-top: 1px solid #333; color: #8696a0; font-size: 13px; position: relative; }
+        #reply-preview .close-reply { position: absolute; right: 10px; top: 10px; cursor: pointer; }
     </style>
 </head>
-<body>
+<body onload="initApp()">
 
 <div class="app-container">
     <div id="chat-list-screen">
@@ -56,84 +45,272 @@
             <div class="icons">
                 <span class="material-icons-outlined">photo_camera</span>
                 <span class="material-icons-outlined">search</span>
-                <span class="material-icons-outlined">more_vert</span>
+                <span class="material-icons-outlined" onclick="toggleModal()">more_vert</span>
             </div>
         </div>
 
-        <div class="chat-item" onclick="openChat('Roberto Sánchez', 'Manito ya te deposite 1k para que botes por mi no me dejes mal.')">
-            <div class="avatar" style="background-image: url('foto1.png');"></div>
-            <div class="chat-info">
-                <div class="name">Roberto Sánchez</div>
-                <div class="message">Manito ya te deposite 1k para que botes por mi no me dejes mal.</div>
-            </div>
-            <div class="meta"><div class="time">9:06 a.m.</div><div class="badge">1</div></div>
+        <div id="add-chat-modal">
+            <input type="text" id="new-name" placeholder="Nombre del contacto">
+            <input type="file" id="new-photo" accept="image/*">
+            <button onclick="createNewChat()" style="background:#00a884; border:none; color:white; padding:5px; cursor:pointer; width:100%;">Añadir Chat</button>
         </div>
 
-        <div class="chat-item" onclick="openChat('Keiko Suegrita', 'Hola Yerno, Buenos días excelente, mañana no olvides dar tu voto.')">
-            <div class="avatar" style="background-image: url('foto2.png');"></div>
-            <div class="chat-info">
-                <div class="name">Keiko Suegrita</div>
-                <div class="message">Hola Yerno, Buenos días excelente, mañana no olvides dar tu voto.</div>
-            </div>
-            <div class="meta"><div class="time">5:00 a.m.</div><div class="badge">1</div></div>
-        </div>
-
-        <div class="chat-item" onclick="openChat('Kyara Villanella', 'Cariño amor, llega temprano a votar más tarde vienes a la casa estaré sola.')">
-            <div class="avatar" style="background-image: url('foto3.png');"></div>
-            <div class="chat-info">
-                <div class="name">Kyara Villanella</div>
-                <div class="message">Cariño amor, llega temprano a votar más tarde vienes a la casa estaré sola.</div>
-            </div>
-            <div class="meta"><div class="time">7:42 a.m.</div><div class="badge">2</div></div>
-        </div>
-
-        <div class="chat-item" onclick="openChat('Kaori', 'Hola cuñado apoyas a mi mamá, o sino me molesto contigo y lo cuento a mí hermana lo de nosotros.')">
-            <div class="avatar" style="background-image: url('foto4.png');"></div>
-            <div class="chat-info">
-                <div class="name">Kaori</div>
-                <div class="message">Hola cuñado apoyas a mi mamá, o sino me molesto contigo y lo cuento a mí hermana lo de nosotros.</div>
-            </div>
-            <div class="meta"><div class="time">7:30 a.m.</div><div class="badge">1</div></div>
+        <div id="chat-list-container">
+            <!-- Los chats se cargarán aquí dinámicamente -->
         </div>
     </div>
 
     <div id="chat-detail-screen">
         <div class="chat-header">
             <span class="material-icons" onclick="closeChat()">arrow_back</span>
-            <div id="contact-name" style="font-weight: bold;">Nombre</div>
+            <div id="contact-name" style="font-weight: bold; cursor: pointer;" onclick="verPerfil()">Nombre</div>
         </div>
         <div class="chat-messages" id="messages-container"></div>
+        <div id="reply-preview">
+            <span id="reply-text"></span>
+            <span class="material-icons close-reply" onclick="cancelReply()">close</span>
+        </div>
         <div class="input-area">
             <input type="text" id="msg-input" placeholder="Escribe un mensaje..." onkeypress="handleEnter(event)">
-            <span class="material-icons" onclick="sendMessage()">send</span>
+            <span class="material-icons" onclick="sendMessage(true)" style="color:#00a884;">send</span>
+            <span class="material-icons" onclick="sendMessage(false)" style="color:#8696a0;">reply</span>
         </div>
     </div>
 </div>
 
 <script>
+    let chatHistories = JSON.parse(localStorage.getItem('savedHistories')) || {};
+    let customChats = JSON.parse(localStorage.getItem('myCustomChats')) || [];
+    let replyingTo = null;
+
+    const defaultChats = [
+        { name: 'Roberto Sánchez', msg: 'Manito ya te deposite 1k para que botes por mi no me dejes mal.', time: '9:06 a.m.', badge: '1', img: 'foto1.png' },
+        { name: 'Keiko Suegrita', msg: 'Hola Yerno, Buenos días excelente, mañana no olvides dar tu voto.', time: '5:00 a.m.', badge: '1', img: 'foto2.png' },
+        { name: 'Kyara Villanella', msg: 'Cariño amor, llega temprano a votar más tarde vienes a la casa estaré sola.', time: '7:42 a.m.', badge: '2', img: 'foto3.png' },
+        { name: 'Kaori', msg: 'Hola cuñado apoyas a mi mamá, o sino me molesto contigo y lo cuento a mí hermana lo de nosotros.', time: '7:30 a.m.', badge: '1', img: 'foto4.png' }
+    ];
+
+    window.onpopstate = function(event) { closeChat(); };
+
+    function initApp() {
+        renderChatList();
+    }
+
+    function renderChatList() {
+        let container = document.getElementById('chat-list-container');
+        container.innerHTML = '';
+        defaultChats.forEach(chat => {
+            if (chatHistories[chat.name] !== "DELETED") {
+                renderChatItem(chat.name, chat.img, chat.msg, chat.time, chat.badge, false);
+            }
+        });
+        customChats.forEach(chat => {
+            renderChatItem(chat.name, chat.img, chat.lastMsg || "", chat.lastTime || "", "", true);
+        });
+    }
+
+    function renderChatItem(name, img, lastMsg, time, badge, isCustom) {
+        let container = document.getElementById('chat-list-container');
+        let div = document.createElement('div');
+        div.className = 'chat-item';
+        div.onclick = function() { openChat(name, isCustom ? "" : lastMsg); };
+        div.oncontextmenu = function(ev) { 
+            if (isCustom) eliminarCustom(ev, div, name); 
+            else eliminar(ev, div); 
+        };
+
+        if (chatHistories[name] && chatHistories[name] !== "DELETED") {
+            let temp = document.createElement('div');
+            temp.innerHTML = chatHistories[name];
+            let bubbles = temp.querySelectorAll('.msg-bubble');
+            if (bubbles.length > 0) {
+                let lastBubble = bubbles[bubbles.length - 1];
+                lastMsg = lastBubble.innerText.split('\n')[0];
+            }
+        }
+
+        div.innerHTML = `
+            <div class="avatar" style="background-image: url('${img}');"></div>
+            <div class="chat-info">
+                <div class="name">${name}</div>
+                <div class="message">${lastMsg}</div>
+            </div>
+            <div class="meta">
+                <div class="time">${time}</div>
+                ${badge ? `<div class="badge">${badge}</div>` : ''}
+            </div>`;
+        container.appendChild(div);
+    }
+
+    function toggleModal() { 
+        let modal = document.getElementById('add-chat-modal'); 
+        modal.style.display = (modal.style.display === 'block') ? 'none' : 'block'; 
+    }
+
+    function verPerfil() { alert("Perfil de: " + document.getElementById('contact-name').innerText); }
+    
+    function eliminar(e, el) { 
+        e.preventDefault(); 
+        if(confirm("¿Eliminar historial de este chat?")) {
+            let name = el.querySelector('.name').innerText;
+            chatHistories[name] = "DELETED";
+            localStorage.setItem('savedHistories', JSON.stringify(chatHistories));
+            el.remove(); 
+        }
+    }
+    
+    function eliminarCustom(e, el, name) { 
+        e.preventDefault(); 
+        if(confirm("¿Eliminar chat e historial?")) { 
+            el.remove(); 
+            customChats = customChats.filter(c => c.name !== name); 
+            localStorage.setItem('myCustomChats', JSON.stringify(customChats)); 
+            delete chatHistories[name];
+            localStorage.setItem('savedHistories', JSON.stringify(chatHistories));
+        } 
+    }
+
+    function createNewChat() {
+        let name = document.getElementById('new-name').value;
+        let fileInput = document.getElementById('new-photo');
+        if(name && fileInput.files[0]) {
+            let reader = new FileReader();
+            reader.onload = function(e) {
+                let imgData = e.target.result;
+                customChats.push({name: name, img: imgData, lastMsg: "", lastTime: ""});
+                localStorage.setItem('myCustomChats', JSON.stringify(customChats));
+                renderChatList();
+                toggleModal();
+                document.getElementById('new-name').value = "";
+                document.getElementById('new-photo').value = "";
+            }
+            reader.readAsDataURL(fileInput.files[0]);
+        }
+    }
+
     function openChat(name, initialMsg) {
         document.getElementById('chat-list-screen').style.display = 'none';
         document.getElementById('chat-detail-screen').style.display = 'flex';
         document.getElementById('contact-name').innerText = name;
-        document.getElementById('messages-container').innerHTML = '<div class="msg-bubble">' + initialMsg + '</div>';
+        
+        if ((!chatHistories[name] || chatHistories[name] === "DELETED") && initialMsg) {
+            let now = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+            chatHistories[name] = `
+                <div onclick="handleMessageClick(this)">
+                    <div class="tag"></div>
+                    <div class="msg-bubble" style="margin-right:auto; background:#202c33;">${initialMsg}<br><small style="font-size:9px; color:#aaa;">${now}</small></div>
+                </div>`;
+            localStorage.setItem('savedHistories', JSON.stringify(chatHistories));
+        }
+        
+        document.getElementById('messages-container').innerHTML = (chatHistories[name] && chatHistories[name] !== "DELETED") ? chatHistories[name] : "";
+        scrollToBottom();
+        window.history.pushState({chat: name}, name);
     }
-    function closeChat() {
-        document.getElementById('chat-list-screen').style.display = 'block';
-        document.getElementById('chat-detail-screen').style.display = 'none';
+
+    function closeChat() { 
+        document.getElementById('chat-list-screen').style.display = 'block'; 
+        document.getElementById('chat-detail-screen').style.display = 'none'; 
+        cancelReply();
+        renderChatList();
     }
-    function sendMessage() {
+
+    function sendMessage(isUser) {
         let input = document.getElementById('msg-input');
+        let name = document.getElementById('contact-name').innerText;
         if(input.value.trim() !== "") {
             let container = document.getElementById('messages-container');
-            container.innerHTML += '<div class="msg-bubble" style="margin-left:auto; background:#005c4b;">' + input.value + '</div>';
+            let now = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+            let style = isUser ? 'margin-left:auto; background:#005c4b;' : 'margin-right:auto; background:#202c33;';
+            
+            let replyHtml = "";
+            if (replyingTo) {
+                replyHtml = `<div class="reply-box">${replyingTo}</div>`;
+                cancelReply();
+            }
+
+            container.innerHTML += `
+                <div onclick="handleMessageClick(this)">
+                    <div class="tag"></div>
+                    <div class="msg-bubble" style="${style}">${replyHtml}${input.value}<br><small style="font-size:9px; color:#aaa;">${now}</small></div>
+                </div>`;
+            
+            chatHistories[name] = container.innerHTML;
+            localStorage.setItem('savedHistories', JSON.stringify(chatHistories));
+            
+            let customChat = customChats.find(c => c.name === name);
+            if (customChat) {
+                customChat.lastMsg = input.value;
+                customChat.lastTime = now;
+                localStorage.setItem('myCustomChats', JSON.stringify(customChats));
+            }
+
             input.value = "";
-            container.scrollTop = container.scrollHeight;
+            scrollToBottom();
         }
     }
-    function handleEnter(e) {
-        if (e.key === 'Enter') sendMessage();
-    }
-</script>
 
+    function scrollToBottom() {
+        let container = document.getElementById('messages-container');
+        setTimeout(() => {
+            container.scrollTop = container.scrollHeight;
+        }, 100);
+    }
+
+    function handleMessageClick(wrapper) {
+        let bubble = wrapper.querySelector('.msg-bubble');
+        let bubbleClone = bubble.cloneNode(true);
+        let replyBox = bubbleClone.querySelector('.reply-box');
+        if (replyBox) replyBox.remove();
+        let small = bubbleClone.querySelector('small');
+        if (small) small.remove();
+        let text = bubbleClone.innerText.trim();
+        
+        let action = prompt("¿Qué deseas hacer?\n1. Etiquetar mensaje\n2. Responder mensaje\n(Escribe 1 o 2)");
+        
+        if (action === "1") {
+            tagMessage(wrapper);
+        } else if (action === "2") {
+            prepareReply(text);
+        }
+    }
+
+    function tagMessage(wrapper) {
+        let tagElement = wrapper.querySelector('.tag');
+        let currentTag = tagElement.innerText;
+        let newTag = prompt("Escribe una etiqueta para este mensaje (ej: Importante, Pendiente) o deja vacío para quitar:", currentTag);
+        
+        if (newTag !== null) {
+            if (newTag.trim() === "") {
+                tagElement.innerText = "";
+                tagElement.style.display = "none";
+            } else {
+                tagElement.innerText = newTag;
+                tagElement.style.display = "block";
+            }
+            saveHistory();
+        }
+    }
+
+    function prepareReply(text) {
+        replyingTo = text;
+        document.getElementById('reply-text').innerText = "Respondiendo a: " + text;
+        document.getElementById('reply-preview').style.display = 'block';
+        document.getElementById('msg-input').focus();
+    }
+
+    function cancelReply() {
+        replyingTo = null;
+        document.getElementById('reply-preview').style.display = 'none';
+    }
+
+    function saveHistory() {
+        let name = document.getElementById('contact-name').innerText;
+        chatHistories[name] = document.getElementById('messages-container').innerHTML;
+        localStorage.setItem('savedHistories', JSON.stringify(chatHistories));
+    }
+
+    function handleEnter(e) { if (e.key === 'Enter') sendMessage(true); }
+</script>
 </body>
 </html>
