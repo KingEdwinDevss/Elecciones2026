@@ -20,16 +20,16 @@
         .chat-info { flex-grow: 1; display: flex; flex-direction: column; justify-content: center; overflow: hidden; }
         .name { font-size: 17px; margin-bottom: 2px; }
         .message { color: #8696a0; font-size: 14px; line-height: 1.3; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        
+        /* Estilos para que los enlaces se vean azules tanto en la lista como dentro del chat */
+        .message a, .msg-bubble a { color: #53bdeb; text-decoration: underline; pointer-events: auto; }
+        
         .meta { text-align: right; margin-left: 10px; display: flex; flex-direction: column; align-items: flex-end; }
         .time { color: #00a884; font-size: 12px; margin-bottom: 4px; white-space: nowrap; }
         .badge { background-color: #00a884; color: #111b21; border-radius: 50%; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; }
         .chat-header { background: #202c33; padding: 15px; display: flex; align-items: center; gap: 15px; }
         .chat-messages { flex-grow: 1; padding: 20px; overflow-y: auto; color: #fff; display: flex; flex-direction: column; scroll-behavior: smooth; -webkit-overflow-scrolling: touch; }
         .msg-bubble { padding: 10px; border-radius: 8px; margin-bottom: 10px; max-width: 80%; width: fit-content; position: relative; cursor: pointer; word-wrap: break-word; }
-        
-        /* Estilos añadidos para que los links resalten en el chat */
-        .msg-bubble a { color: #53bdeb; text-decoration: underline; pointer-events: auto; }
-        
         .input-area { background: #202c33; padding: 10px; display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
         input { flex-grow: 1; background: #2a3942; border: none; padding: 10px; border-radius: 8px; color: white; outline: none; }
         #add-chat-modal { display: none; position: absolute; top: 60px; right: 20px; background: #202c33; padding: 15px; border-radius: 8px; z-index: 100; box-shadow: 0 4px 10px rgba(0,0,0,0.5); border: 1px solid #333; }
@@ -123,13 +123,22 @@
             else eliminar(ev, div); 
         };
 
+        // Modificado para mantener la estructura HTML (los links de tipo <a>) en la lista de arriba
         if (chatHistories[name] && chatHistories[name] !== "DELETED") {
             let temp = document.createElement('div');
             temp.innerHTML = chatHistories[name];
             let bubbles = temp.querySelectorAll('.msg-bubble');
             if (bubbles.length > 0) {
-                let lastBubble = bubbles[bubbles.length - 1];
-                lastMsg = lastBubble.innerText.split('\n')[0];
+                let lastBubble = bubbles[bubbles.length - 1].cloneNode(true);
+                
+                // Quitamos el texto secundario como la hora o respuestas previas para dejar solo el mensaje limpio con su link
+                let small = lastBubble.querySelector('small');
+                if (small) small.remove();
+                let replyBox = lastBubble.querySelector('.reply-box');
+                if (replyBox) replyBox.remove();
+                
+                // Reemplazamos los saltos de línea por espacios para que no se oculte el link abajo
+                lastMsg = lastBubble.innerHTML.replace(/<br\s*\/?>/gi, ' ');
             }
         }
 
@@ -205,7 +214,6 @@
         
         if ((!chatHistories[name] || chatHistories[name] === "DELETED") && initialMsg) {
             let now = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-            // Convertimos posibles links en el mensaje inicial por defecto
             let formattedInitial = linkify(initialMsg);
             chatHistories[name] = `
                 <div onclick="handleMessageClick(this, event)">
@@ -255,7 +263,7 @@
             
             let customChat = customChats.find(c => c.name === name);
             if (customChat) {
-                customChat.lastMsg = input.value;
+                customChat.lastMsg = processedText; // Almacenamos con la etiqueta del link también para chats nuevos
                 customChat.lastTime = now;
                 localStorage.setItem('myCustomChats', JSON.stringify(customChats));
             }
